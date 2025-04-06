@@ -6,14 +6,16 @@ public class PlayerScript : MonoBehaviour
     private float movement;
     [SerializeField] private float speed = 5;
     [SerializeField] private float jumpForce = 10;
+    private enum AnimationState { Idle, Walking, Jumping, Falling, Kicking, Punching };
     private Rigidbody2D rb;
     private Collider2D coll;
+    private Animator anim;
     private LayerMask groundLayer;
-
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
         coll = GetComponent<Collider2D>();
+        anim = GetComponent<Animator>();
         groundLayer = LayerMask.GetMask("Ground");
     }
     private void OnMovement(InputValue value)
@@ -27,10 +29,32 @@ public class PlayerScript : MonoBehaviour
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
         }
     }
+    private void OnJab(InputValue value)
+    {
+        anim.SetTrigger("jab");
+    }
+    private void OnKick(InputValue value)
+    {
+        anim.SetTrigger("kick");
+    }
     private void FixedUpdate()
     {
         rb.linearVelocity = new Vector2(movement * speed, rb.linearVelocity.y);
-      //  UpdateFacingDirection();
+        UpdateFacingDirection();
+        UpdateAnimationState();
+    }
+    private void UpdateAnimationState()
+    {
+        if (rb.linearVelocityY != 0 && !IsGrounded())
+            anim.SetInteger("state", (int)AnimationState.Jumping);
+        else if (rb.linearVelocityX == 0)
+        {
+            anim.SetInteger("state", (int)AnimationState.Idle);
+        }
+        else
+        {
+            anim.SetInteger("state", (int)AnimationState.Walking);
+        }
     }
     private void UpdateFacingDirection()
     {
